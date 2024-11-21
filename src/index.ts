@@ -1,5 +1,4 @@
 import express, { Request, Response, NextFunction } from 'express';
-import 'reflect-metadata';
 import { readdirSync } from 'fs';
 import { sayHelloController } from './controllers';
 import 'dotenv/config';
@@ -12,6 +11,7 @@ import { Server, createServer } from 'http';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares';
 import { URL } from 'url';
+import { initializeDataSource } from './db/data-source';
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerOptions = require('./swagger');
@@ -70,12 +70,12 @@ readdirSync('./src/routes').map((path) => {
 app.get('/', sayHelloController);
 
 // Error handler middleware
-app.use(errorHandler);
 
 // Handle all undefined routes
 app.use('*', (req: Request, res: Response, next: NextFunction): void => {
   res.json({ message: 'Route not found', status: 404 });
 });
+app.use(errorHandler);
 
 const corsOptions: CorsOptions = {
   origin: '*',
@@ -86,6 +86,20 @@ const corsOptions: CorsOptions = {
 app.use(cors(corsOptions));
 // app.use(pgNotify(io));
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Initialize the database
+async function startServer() {
+  try {
+    await initializeDataSource();
+    console.log('Database initialized successfully');
+
+    // Start the server after DB initialization
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    process.exit(1);
+  }
+}
+
+startServer()
