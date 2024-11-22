@@ -1,15 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { ResponseHandler } from '../utils';
+import { ForbiddenError, UnauthorizedError } from './errorhandler';
 
 dotenv.config();
 
-const secretKey = process.env.JWT_SECRET || 'your-secret-key';
+const secretKey = process.env.JWT_SECRET;
+
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: string;
+}
+
 export const authenticateJWT = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   const authHeader = req.headers.authorization;
   const tokenFromCookie = req.cookies?.access_token;
 
@@ -20,15 +29,15 @@ export const authenticateJWT = (
   } else if (tokenFromCookie) {
     token = tokenFromCookie;
   } else {
-    return res.status(401).json({ message: 'Authorization token missing' });
+    throw new UnauthorizedError('Authorization token missing');
   }
 
   jwt.verify(token, secretKey, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+      throw new ForbiddenError('Invalid or expired token');
     }
 
-    req.user = decoded;
+    req.user = decoded as JwtPayload;
 
     next();
   });
