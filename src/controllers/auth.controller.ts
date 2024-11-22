@@ -6,12 +6,13 @@ import { User } from '../db/entities/User.entity';
 import { ResponseHandler } from '../utils';
 import { BadRequestError, NotFoundError } from '../middlewares';
 import { fieldValidation } from '../helpers/user.helper';
+import { createWallet } from '../services/wallet.service';
 
 const userRepository = dataSource.getRepository(User);
 
-
 const jwtSecret = process.env.JWT_SECRET;
 const salt = process.env.SALT || 10;
+
 // Register Function
 export const registerUser = async (
   req: Request,
@@ -21,8 +22,8 @@ export const registerUser = async (
   try {
     const { email, password: plainPassword, first_name, last_name } = req.body;
 
+    // Validate inputs (assuming fieldValidation is implemented)
     const requiredFields = ['email', 'password', 'first_name', 'last_name'];
-
     const fieldDisplayNames = {
       email: 'Email',
       password: 'Password',
@@ -33,36 +34,47 @@ export const registerUser = async (
     fieldValidation(requiredFields, fieldDisplayNames, req.body);
 
     // Check if user already exists
-    const existingUser = await userRepository.findOneBy({ email });
+    const userRepo = dataSource.getRepository(User);
+    const existingUser = await userRepo.findOneBy({ email });
     if (existingUser) {
       throw new BadRequestError('User with this email already exists');
     }
 
     // Hash the password
-    const hashedPassword = await bcrypt.hash(plainPassword, parseInt(salt.toString()));
-
-    // Create the user
-    const newUser = userRepository.create({
-      email,
-      password: hashedPassword,
-      first_name,
-      last_name,
-    });
-    const savedUser = await userRepository.save(newUser);
-
-    // Omit sensitive information
-    const { password, ...userDataRes } = savedUser;
-
-    return ResponseHandler.success(
-      res,
-      userDataRes,
-      201,
-      'User registered successfully'
+    const hashedPassword = await bcrypt.hash(
+      plainPassword,
+      parseInt(salt.toString())
     );
+
+    // Create a user and wallet within a transaction
+    await dataSource.transaction(async (manager) => {
+      // Create the user
+      const newUser = manager.create(User, {
+        email,
+        password: hashedPassword,
+        first_name,
+        last_name,
+      });
+      const savedUser = await manager.save(newUser);
+
+      // Create a wallet for the user
+      await createWallet(savedUser.id, manager);
+
+      // Exclude sensitive info before returning
+      const { password, ...userDataRes } = savedUser;
+
+      ResponseHandler.success(
+        res,
+        userDataRes,
+        201,
+        'User registered successfully'
+      );
+    });
   } catch (error) {
     next(error);
   }
 };
+
 // Login Function
 export async function loginUser(
   req: Request,
