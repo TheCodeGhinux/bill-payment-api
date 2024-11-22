@@ -1,14 +1,16 @@
+import { Equal } from 'typeorm';
 import dataSource from '../db/data-source';
 import { User } from '../db/entities/User.entity';
 import { BadRequestError, NotFoundError } from '../middlewares';
 
 const userRepository = dataSource.getRepository(User);
-export const getUserById = async (id: string) => {
+export const getUserById = async (id: string): Promise<User> => {
   try {
-    const user = await userRepository.findOneBy({ id });
+    const user = await userRepository.findOne({ where: { id: Equal(id) } });
     if (!user) {
       throw new NotFoundError('User not found');
     }
+    return user;
   } catch (error) {
     throw error;
   }
