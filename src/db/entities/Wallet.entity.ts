@@ -7,6 +7,9 @@ export class Wallet extends AbstractBaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   balance: number;
 
+  @Column({ type: 'varchar', unique: true })
+  account_number: string;
+
   @OneToOne(() => User, (user) => user.wallet, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;

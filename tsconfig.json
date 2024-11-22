@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-   "lib": ["es5", "es6","es2020"],
+    "lib": ["es5", "es6", "es2020"],
     "target": "es2020",
     "module": "commonjs",
     "experimentalDecorators": true,
@@ -12,5 +12,6 @@
     "sourceMap": true
   },
   "include": ["src/**/*.ts", "types.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "typeRoots": ["./node_module/@types", "./src/types"]
 }
