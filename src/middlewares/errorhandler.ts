@@ -7,10 +7,7 @@ class CustomError extends Error {
     super(message);
     this.name = name;
     this.statusCode = statusCode || 500;
-    // Remove the stack trace to suppress it entirely
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -40,22 +37,20 @@ const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  // Log only the error message, suppressing stack trace
-  // console.error(err.message);
+  // console.error('An error occurred:', err);
 
   if (res.headersSent) {
-    return;
+    return next(err);
   }
 
   const errorResponse = {
     timestamp: new Date().toISOString(),
     status: err.statusCode || 500,
-    error: err.name || 'Internal Server Error',
+    // error: err.name || 'Internal Server Error',
     message: err.message || 'Something went wrong',
     success: false,
   };
 
-  // Send the response without the stack trace
   res.status(errorResponse.status).json(errorResponse);
 };
 

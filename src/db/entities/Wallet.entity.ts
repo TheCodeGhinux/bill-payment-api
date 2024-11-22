@@ -1,5 +1,5 @@
 import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
-import { User } from './User';
+import { User } from './User.entity';
 import { AbstractBaseEntity } from '../AbstractEntity';
 
 @Entity('wallets')

@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { User } from './User';
-import { Wallet } from './Wallet';
+import { User } from './User.entity';
+import { Wallet } from './Wallet.entity';
 import { AbstractBaseEntity } from '../AbstractEntity';
 
 export type BillStatus = 'success' | 'failed';

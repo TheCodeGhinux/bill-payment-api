@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
+import 'reflect-metadata';
 import * as dotenv from 'dotenv';
-import path from 'path'; // Import path module to resolve paths dynamically
+import path from 'path';
+import { User } from './entities/User.entity';
 
 dotenv.config();
 
@@ -11,10 +13,10 @@ const sslOption = process.env.DB_SSL || false;
 const fileExtension = isDevelopment ? '*.ts' : '*.js';
 
 // Use a wildcard to load all entities from the entities directory
-const entitiesPath = path.join(__dirname, 'entities', fileExtension); // Dynamic file extension
+const entitiesPath = path.join(__dirname, 'entities', fileExtension);
 
 // Similarly for migrations, use a wildcard pattern
-const migrationsPath = path.join(__dirname, 'migration', fileExtension); // Dynamic file extension for migrations
+const migrationsPath = path.join(__dirname, 'migration', fileExtension);
 
 const dataSource = new DataSource({
   type: process.env.DB_TYPE as 'postgres',
@@ -22,9 +24,9 @@ const dataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
-  entities: [entitiesPath],
-  migrations: [migrationsPath],
-  synchronize: isDevelopment,
+  entities: [process.env.DB_ENTITIES],
+  migrations: [process.env.DB_MIGRATIONS],
+  synchronize: true,
   migrationsTableName: 'migrations',
   ssl:
     sslOption === 'require'
